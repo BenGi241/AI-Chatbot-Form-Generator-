@@ -1,0 +1,522 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  background: linear-gradient(135deg, #1e2a44 0%, #2a1e44 100%);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  direction: rtl;
+  color: #e0e0e0;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: row-reverse;
+  /* כיוון RTL */
+  width: 100%;
+  height: 100vh;
+}
+
+.chat-panel {
+  flex: 1;
+  /* תופס את כל הרוחב שנותר */
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+  margin: 0;
+  /* לא להשאיר מרווח */
+  padding: 0;
+  /* אם יש padding פנימי, אפשר לשנות בהתאם */
+}
+
+.chat-panel.shrunk {
+  width: calc(100% - 270px);
+  /* מתכווץ כאשר הסיידבר פתוח */
+}
+
+.chat-header {
+  padding: 1rem;
+  border-bottom: 1px solid #3b4252;
+  text-align: center;
+  position: relative;
+  /* לאפשר מיקום הכפתור */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.chat-header .sidebar-btn {
+  position: absolute;
+  right: 1rem;
+  /* ממקם את הכפתור בצד שמאל */
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.chat-header h1 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #4a5ee9, #764ba2);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.chat-header p {
+  font-size: 1rem;
+  color: #e0e0e0;
+  opacity: 0.8;
+}
+
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  background: #4ade80;
+  border-radius: 50%;
+  margin: 0 auto 0.5rem;
+  box-shadow: 0 0 10px #4ade80;
+}
+
+.chat-title-container {
+  margin-top: 1rem;
+}
+
+.chat-title-container h1 {
+  font-size: 1.5rem;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.message {
+  position: relative;
+  max-width: 70%;
+  /* רוחב מקסימלי לבועות */
+  padding: 0.8rem 1.2rem;
+  border-radius: 15px;
+  line-height: 1.5;
+  margin: 0.5rem 1rem;
+  font-size: 0.95rem;
+}
+
+.message.ai {
+  background: #2a3144;
+  /* צבע כהה לבועות ה-AI */
+  align-self: flex-start;
+  /* הודעות AI בצד שמאל */
+  border-top-left-radius: 5px;
+  /* פינה שמאלית עליונה פחות מעוגלת */
+}
+
+/* זנב לבועת ה-AI */
+.message.ai::after {
+  content: '';
+  position: absolute;
+  right: -10px;
+  /* זנב בצד ימין */
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border-bottom: 10px solid #2a3144;
+  border-left: 10px solid transparent;
+}
+
+/* אייקון רובוט להודעות ה-AI */
+.message.ai::before {
+  content: '🤖';
+  position: absolute;
+  top: -20px;
+  right: 10px;
+  /* התאמת האייקון לצד ימין */
+  font-size: 1.2rem;
+}
+
+.message.user {
+  background: #4a5ee9;
+  /* צבע כחול לבועות המשתמש */
+  color: #ffffff;
+  align-self: flex-end;
+  /* הודעות משתמש בצד ימין */
+  border-top-right-radius: 5px;
+  /* פינה ימנית עליונה פחות מעוגלת */
+}
+
+/* זנב לבועת המשתמש */
+.message.user::after {
+  content: '';
+  position: absolute;
+  left: -10px;
+  /* זנב בצד שמאל */
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border-bottom: 10px solid #4a5ee9;
+  border-right: 10px solid transparent;
+}
+
+.chat-input-container {
+  padding: 1rem;
+  border-top: 1px solid #3b4252;
+  display: flex;
+  align-items: center;
+  background: rgba(30, 35, 50, 0.95);
+  /* רקע קל לקונטיינר קלט */
+}
+
+.chat-input {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.input-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+#messageInput {
+  width: 100%;
+  padding: 0.8rem 2.5rem 0.8rem 1rem;
+  border: none;
+  border-radius: 25px;
+  background: #252b3b;
+  color: #e0e0e0;
+  font-size: 1rem;
+  resize: none;
+  direction: rtl;
+}
+
+#messageInput:focus {
+  outline: none;
+  box-shadow: 0 0 8px rgba(74, 94, 233, 0.3);
+}
+
+.send-btn {
+  background: #007bff;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.send-btn:hover {
+  background: #0056b3;
+  transform: scale(1.1);
+}
+
+.send-btn:disabled {
+  background: #3b4252;
+  cursor: not-allowed;
+}
+
+.typing-indicator {
+  display: none;
+  padding: 0.5rem 1rem;
+  color: #e0e0e0;
+  font-size: 0.9rem;
+  background: rgba(30, 35, 50, 0.95);
+  /* רקע קל למחוון הקלדה */
+}
+
+.typing-indicator span {
+  margin-left: 0.5rem;
+}
+
+.typing-dots span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 50%;
+  margin: 0 2px;
+  animation: typing 1s infinite;
+}
+
+.typing-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing {
+
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+.main-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-preview-panel {
+  display: none;
+  /* מוסתר כברירת מחדל */
+  width: 50px;
+  /* רוחב קבוע לפאנל */
+  background: rgba(30, 35, 50, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 15px;
+  padding: 1rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.form-preview-panel.open {
+  display: block;
+  height: 100%;
+  width: 100%;
+  max-width: 300px;
+  /* מוצג כאשר פעיל */
+}
+
+.sidebar-btn {
+  background: #007bff;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.sidebar-btn:hover {
+  background: #0056b3;
+  transform: scale(1.1);
+}
+
+.sidebar-btn.close {
+  position: absolute;
+  top: 10px;
+  /* מיקום מלמעלה */
+  left: 10px;
+  /* אם RTL אפשר לשנות ל-right: 10px */
+  background: #ff4d4f;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  z-index: 1001;
+  /* מעל התוכן */
+}
+
+.sidebar-btn.close:hover {
+  background: #bd1523;
+  transform: scale(1.1);
+}
+
+.sidebar {
+  width: 0;
+  transition: width 0.3s ease;
+  /* <<< כאן הטרנזישן */
+  overflow-x: hidden;
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  background: #1a1f2b;
+  z-index: 1000;
+  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
+}
+
+.sidebar h3 {
+  font-size: 1.2rem;
+  color: #ffffff;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #3b4252;
+  margin-bottom: 0.5rem;
+}
+
+.new-chat-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #007bff;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  margin: 0.5rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.new-chat-btn:hover {
+  background: #0056b3;
+  transform: translateX(-3px);
+}
+
+#formLinks {
+  padding: 0;
+  /* אין רווח פנימי */
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
+#formLinks a {
+  display: block;
+  color: #e0e0e0;
+  text-decoration: none;
+  padding: 0.8rem 1rem;
+  /* padding פנימי */
+  border-radius: 8px;
+  margin: 0;
+  /* חשוב! מסיר את כל הרווח החיצוני */
+  font-size: 0.95rem;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+
+#formLinks a:hover {
+  background: #2a3144;
+  color: #ffffff;
+  transform: none;
+  /* ביטול הזזה */
+}
+
+#formLinks a.active {
+  background: #4a5ee9;
+  color: #ffffff;
+}
+
+
+
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+    padding: 0;
+  }
+
+  .chat-panel {
+    margin-bottom: 0;
+  }
+
+  .chat-panel.shrunk {
+    width: calc(100% - 250px);
+    /* רוחב הסיידבר */
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100%;
+  }
+
+  .sidebar.open {
+    width: 250px;
+  }
+
+  .message.ai::after,
+  .message.user::after {
+    display: none;
+    /* מסתיר את הזנבות במובייל למראה נקי יותר */
+  }
+
+  .message.ai::before {
+    top: -15px;
+    /* התאמת מיקום האייקון במובייל */
+    right: 5px;
+    /* התאמת האייקון לצד ימין */
+  }
+
+  .chat-header .sidebar-btn {
+    left: 0.5rem;
+    /* התאמת מיקום הכפתור במובייל */
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: bold;
+  }
+}
+
+/* עיצוב אחיד לכל הכפתורים */
+.quick-action,
+#exportWordBtn,
+.send-btn,
+.sidebar-btn,
+.new-chat-btn {
+  background: #007bff;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.quick-action:hover,
+#exportWordBtn:hover,
+.send-btn:hover,
+.sidebar-btn:hover,
+.new-chat-btn:hover {
+  background: #0056b3;
+  transform: scale(1.1);
+}
+
+/* עיצוב ספציפי לכפתור הסגירה בסיידבר */
+.sidebar-btn.close {
+  background: #ff4d4f;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.sidebar-btn.close:hover {
+  background: #bd1523;
+  transform: scale(1.1);
+}
+
+/* מיקום בצד העליון מימין */
+#exportWordBtn {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 1000;
+}

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <!-- CSP מותאם -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-eval';
+    style-src 'self' 'unsafe-inline';
+    connect-src 'self' http://localhost:3000 http://localhost:11434;">
+
+  <title>עוזר אישי לכתיבת דמ״צים</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="app-container">
+    <div class="chat-panel">
+      <div class="chat-header">
+        <button class="sidebar-btn" id="openSidebarBtn">טפסים קודמים 📋</button>
+        <!--
+        <div class="status-indicator"></div>
+         כותרת הצ'אט עם אפשרות עריכה -->
+        <div class="chat-title-container">
+          <h1 id="chatTitle">צ'אט חדש</h1>
+        </div>
+        <button id="exportWordBtn">ייצא צ'אט ל-Word 📄</button>
+
+      </div>
+
+      <div class="chat-messages" id="chatMessages">
+        <div class="message ai">
+          <form>
+            
+          </form>
+        </div>
+      </div>
+
+      <div class="typing-indicator" id="typingIndicator">
+        <span>AI חושב</span>
+        <div class="typing-dots"><span></span><span></span><span></span></div>
+      </div>
+
+      <div class="chat-input-container">
+        <div class="chat-input">
+          <div class="input-wrapper">
+            <textarea id="messageInput" placeholder="כתוב כאן את בקשתך..." rows="1"></textarea>
+          </div>
+          <button class="send-btn" id="sendBtn">➤</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="form-preview-panel">
+        <div id="mySidebar" class="sidebar">
+          <button class="sidebar-btn close" id="closeSidebarBtn">❌ סגור</button>
+          <h3>טפסים קודמים</h3>
+          <!-- כפתור יצירת צ'אט חדש -->
+          <button id="newChatBtn" class="new-chat-btn">➕ צור צ'אט חדש</button>
+          <div id="formLinks"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./chat.js"></script>
+</body>
+</html>

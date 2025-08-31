@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>צ'אט</title>
+  <link rel="stylesheet" href="./src/homePageStyle.css" />
+</head>
+<body>
+
+<div id="welcome" class="center">
+  <div class="card">
+    <h1>ברוך הבא 👋</h1>
+    <button onclick="createChat()">פתח צ'אט חדש</button>
+  </div>
+</div>
+
+<div id="chat" class="chat-container" style="display: none;">
+  <div class="chat-header" id="chatTitle"></div>
+  <div class="chat-messages" id="chatMessages">
+    <p class="text-gray-500" style="text-align:center;">אין עדיין הודעות</p>
+  </div>
+  <div class="chat-input">
+    <input type="text" id="chatInput" placeholder="כתוב הודעה..." />
+  </div>
+</div>
+
+<script>
+  let activeChat = null;
+
+  function createChat() {
+    const title = prompt("תן שם לצ'אט החדש:");
+    if (title && title.trim() !== "") {
+      activeChat = { id: Date.now(), title, messages: [] };
+      document.getElementById("welcome").style.display = "none";
+      document.getElementById("chat").style.display = "flex";
+      document.getElementById("chatTitle").innerText = title;
+    }
+  }
+
+  document.getElementById("chatInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && e.target.value.trim() !== "") {
+      const msg = { role: "user", content: e.target.value };
+      activeChat.messages.push(msg);
+      renderMessages();
+      e.target.value = "";
+    }
+  });
+
+  function renderMessages() {
+    const container = document.getElementById("chatMessages");
+    container.innerHTML = "";
+    activeChat.messages.forEach((m) => {
+      const div = document.createElement("div");
+      div.innerHTML = `<strong>${m.role}:</strong> ${m.content}`;
+      container.appendChild(div);
+    });
+  }
+</script>
+
+</body>
+</html>
