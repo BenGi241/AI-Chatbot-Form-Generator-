@@ -520,3 +520,143 @@ body {
   left: 16px;
   z-index: 1000;
 }
+
+
+
+.loader {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #3b82f6;
+  border-top: 5px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: auto;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+/* עיצוב modal מותאם לצבעי הצ'אט */
+.modal-content {
+  background: linear-gradient(135deg, #1e2a44, #2a1e44);
+  /* רקע כהה עם גרדיאנט */
+  padding: 25px;
+  border-radius: 15px;
+  width: 360px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+  text-align: right;
+  direction: rtl;
+  color: #e0e0e0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+}
+
+.modal-content h2 {
+  margin-bottom: 15px;
+  font-size: 18px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #4a5ee9, #764ba2);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.modal-content label {
+  display: block;
+  margin-top: 12px;
+  font-size: 0.95rem;
+  color: #cfd6e0;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  border: 1px solid #3b4252;
+  border-radius: 10px;
+  background: #252b3b;
+  color: #e0e0e0;
+}
+
+.modal-actions {
+  margin-top: 25px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.modal-actions button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+/* כפתור ביטול */
+#cancelExport {
+  background: #3b4252;
+  color: #e0e0e0;
+}
+
+#cancelExport:hover {
+  background: #4a5568;
+  transform: scale(1.05);
+}
+
+/* כפתור אישור */
+#confirmExport {
+  background: #4a5ee9;
+  color: #ffffff;
+}
+
+#confirmExport:hover {
+  background: #3b46c2;
+  transform: scale(1.05);
+}
+
+/* אפשר להוסיף אפקט קל לגרדיאנט פנימי על הכפתורים */
+.modal-actions button:active {
+  transform: scale(0.97);
+}
+
+* כפתור מותאם אישית */ .custom-file-upload {
+  display: inline-block;
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: #4a5ee9;
+  color: #ffffff;
+  font-weight: bold;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.custom-file-upload:hover {
+  background: #3b46c2;
+  transform: scale(1.05);
+}
+
+.custom-file-upload:active {
+  transform: scale(0.97);
+}

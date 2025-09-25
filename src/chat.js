@@ -1,15 +1,17 @@
-import { Document, Packer, Paragraph, TextRun, AlignmentType } from "docx";
-import fs from "fs";
+import { Document, Packer, Paragraph, TextRun, AlignmentType, ImageRun } from "docx";
+
+// import fs from "fs";
 
 const exportPrompt = ` קיבלת את כל ההודעות הקודמות מהצ’אט.
 המטרה שלך: ליצור פלט סופי של טופס דמ״צ מוכן לשימוש.  
 
 הנחיות:
 1. עבור על כל ההודעות הקודמות וחלץ את כל התשובות שהמשתמש נתן.  
-2. קח עבור כל סעיף את התשובה האחרונה בלבד (אם יש כמה תשובות).  
+2. אם יש כמה תשובות רלוונטיות באותו נושא, תקטלג אותם ברשימה לפי אותיות
+ (א. , ב. , ג. , ד. , ה. , ו. , ז. ,...).  
 3. אם סעיף לא נענה – כתוב "—".  
 4. נסח מחדש את התשובות בצורה מלאה, ברורה ורציפה.  
-5. הצג את הפלט בשני חלקים:  
+
 
 JSON לפי הפורמט הבא:
 {
@@ -26,6 +28,7 @@ JSON לפי הפורמט הבא:
 בנוסף אל תכלול שום הסברים או הערות, רק את ה-JSON.
 `;
 // ==== הצגת תאריך נוכחי ====
+let today = new Date();
 
 // ==== שם הצ׳אט ====
 const chatTitle = document.getElementById("chatTitle");
@@ -130,20 +133,66 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
 // ====  כפתור יצוא קובץ  ====
-const exportBtn = document.getElementById('exportWordBtn');
 
-exportBtn.addEventListener('click', async () => {
-      const chatName = chatTitle.textContent;
+const exportBtn = document.getElementById('exportWordBtn');
+const btnText = exportBtn.querySelector('.btn-text');
+
+const exportModal = document.getElementById("exportModal");
+const logoInputModal = document.getElementById("logoInputModal");
+const signatureInput = document.getElementById("signatureInput");
+const submitterNameInput = document.getElementById("submitterName");
+
+const cancelExport = document.getElementById("cancelExport");
+const confirmExport = document.getElementById("confirmExport");
+
+// לחיצה על הכפתור הראשי → מציגים modal
+exportBtn.addEventListener('click', () => {
+
+      exportModal.classList.remove("hidden");
+
+});
+
+// ביטול → סוגר modal
+cancelExport.addEventListener("click", () => {
+      exportModal.classList.add("hidden");
+});
+
+// אישור → מתחיל תהליך הייצוא
+confirmExport.addEventListener("click", async () => {
+      exportModal.classList.add("hidden");
+      const chatName = chatTitle?.textContent?.trim(); // השתמש ב־chatTitle שהגדרת
       if (!chatName) {
             alert("לא נבחר צ'אט לייצוא");
             return;
       }
 
+      // מציג Loader
+      btnText.textContent = "מייצא...";
+
+      const file = logoInputModal.files[0];
+      const submitterName = submitterNameInput.value.trim();
+
+      if (!file) {
+            alert("לא נבחר לוגו");
+            return;
+      }
+      if (!submitterName) {
+            alert("נא להזין שם מגיש");
+            return;
+      }
+
+      const signatureFile = signatureInput.files[0];
+
+
+      if (!signatureFile) {
+            alert("לא נבחרה חתימה");
+            return;
+      }
+
+
       try {
             // שלב 1 – בקשה ל-AI שיחזיר JSON
             const aiResult = await AIInstructionsForExport();
-
-            // JSON מה-AI מגיע כמחרוזת → נפרק אותו
             const jsonData = extractJson(aiResult);
             if (!jsonData) {
                   alert("❌ הפלט שהתקבל מה-AI לא בפורמט JSON תקין");
@@ -151,8 +200,15 @@ exportBtn.addEventListener('click', async () => {
                   return;
             }
 
+            // קורא את הלוגו כ־Bytes
+            const arrayBuffer = await file.arrayBuffer();
+            const logoImg = new Uint8Array(arrayBuffer);
+
+            const sigArrayBuffer = await signatureFile.arrayBuffer();
+            const signatureImg = new Uint8Array(sigArrayBuffer);
+
             // שלב 2 – יצירת מסמך Word
-            const doc = await generateDmatsDoc(jsonData, chatName);
+            const doc = await generateDmatsDoc(jsonData, chatName, logoImg, submitterName, signatureImg);
 
             // שלב 3 – הורדת הקובץ
             const buffer = await Packer.toBlob(doc);
@@ -168,6 +224,9 @@ exportBtn.addEventListener('click', async () => {
       } catch (err) {
             console.error(err);
             alert("אירעה שגיאה בייצוא הצ'אט");
+      } finally {
+            btnText.textContent = "ייצוא לצ'אט";
+            exportModal.classList.add("hidden"); // סוגר modal אחרי סיום
       }
 });
 
@@ -203,66 +262,102 @@ async function AIInstructionsForExport() {
 
 
 // פונקציה שמקבלת JSON ומייצרת Word
-async function generateDmatsDoc(jsonData, title = "טופס דמ״צ") {
-      function createMainTitle(text) {
+async function generateDmatsDoc(jsonData, title = "טופס דמ״צ", logoImg, submitterName = 'חט״ל', signiture = "בברכה") {
+      function createHeader() {
+            today = new Date().toLocaleDateString("he-IL");
+            const text = ` ${submitterName}, ${today}`;
             return new Paragraph({
-                  alignment: AlignmentType.CENTER, // כותרת ראשית במרכז
-                  bidirectional: true,
+
+                  alignment: AlignmentType.RIGHT,
+                  border: {
+                        top: { style: "thick", size: 6, color: "000000" }, // גבול עליון שחור
+                        bottom: { style: "thick", size: 6, color: "000000" }, // גבול תחתון שחור
+                        left: { style: "thick", size: 6, color: "000000" }, // גבול שמאל שחור
+                        right: { style: "thick", size: 6, color: "000000" }, // גבול ימין שחור
+
+                  },
                   children: [
                         new TextRun({
                               text,
                               bold: true,
                               font: "Arial",
-                              size: 36, // 18pt
+                              size: 36,
+                              rightToLeft: true,
+                              rtl: true,
+                              alignment: AlignmentType.LEFT,
+                        }),
+                        new ImageRun({
+                              data: logoImg, // עכשיו זה Uint8Array
+                              transformation: { width: 70, height: 70 },
+                        })
+                  ],
+            });
+      }
+
+      function createMainTitle(text) {
+            text = `\n הנדון: ${text} \n\n`;
+            return new Paragraph({
+                  alignment: AlignmentType.CENTER,
+                  bidirectional: true,
+                  children: [
+                        new TextRun({
+                              text,
+                              bold: true,
+                              underline: {},
+                              font: "Arial",
+                              size: 36,
+                              rightToLeft: true,
+                              rtl: true,
+                        }),
+                  ],
+            });
+      }
+
+      function createSection(letter, title, bodyText) {
+            return new Paragraph({
+                  alignment: AlignmentType.RIGHT,
+                  bidirectional: true,
+                  children: [
+                        new TextRun({
+                              text: `${letter}. ${title} \n` || "—",
+                              bold: true,
+                              underline: {},
+                              font: "Arial",
+                              size: 24,
+                              rightToLeft: true,
+                        }),
+                        new TextRun({
+                              text: `${bodyText} \n\n` || "—",
+                              font: "Arial",
+                              size: 24,
                               rightToLeft: true,
                         }),
                   ],
             });
       }
 
-      function createSection(letter, sectionTitle, bodyText) {
-            return [
-                  // כותרת סעיף
-                  new Paragraph({
-                        alignment: AlignmentType.RIGHT, // יישור לימין
-                        bidirectional: true,
-                        children: [
-                              new TextRun({
-                                    text: `${letter}. ${sectionTitle}:`,
-                                    bold: true,
-                                    underline: {},
-                                    font: "Arial",
-                                    size: 28, // 14pt
-                                    rightToLeft: true,
-                              }),
-                        ],
-                  }),
-                  // תוכן הסעיף
-                  new Paragraph({
-                        alignment: AlignmentType.RIGHT, // יישור לימין
-                        bidirectional: true,
-                        children: [
-                              new TextRun({
-                                    text: bodyText || "—",
-                                    font: "Arial",
-                                    size: 24, // 12pt
-                                    rightToLeft: true,
-                              }),
-                        ],
-                  }),
-            ];
+      function createSignature() {
+            return new Paragraph({
+                  alignment: AlignmentType.LEFT,
+                  bidirectional: true,
+                  children: [
+                        new ImageRun({
+                              data: signiture, // עכשיו זה Uint8Array
+                              transformation: { width: 240, height: 120 },
+                        })
+                  ],
+            });
       }
 
-      const hebrewLetters = ["א", "ב", "ג", "ד", "ה", "ו", "ז"];
-
+      const numbers = [1, 2, 3, 4, 5, 6, 7];
       const mapping = [
-            [hebrewLetters[0], "פתיח דמ״צ", jsonData["פתיח דמ״צ"]],
-            [hebrewLetters[1], "כללי", jsonData["כללי"]],
-            [hebrewLetters[2], "רקע", jsonData["רקע"]],
-            [hebrewLetters[3], "פער מבצעי", jsonData["פער מבצעי"]],
-            [hebrewLetters[4], "הצורך המבצעי", jsonData["הצורך המבצעי"]],
-            [hebrewLetters[5], "מענה קיים", jsonData["מענה קיים"]],
-            [hebrewLetters[6], "תנאים מגבלות ואילוצים", jsonData["תנאים מגבלות ואילוצים"]],
+            [numbers[0], "פתיח דמ״צ:", jsonData["פתיח דמ״צ"]],
+            [numbers[1], "כללי:", jsonData["כללי"]],
+            [numbers[2], "רקע:", jsonData["רקע"]],
+            [numbers[3], "פער מבצעי:", jsonData["פער מבצעי"]],
+            [numbers[4], "הצורך המבצעי:", jsonData["הצורך המבצעי"]],
+            [numbers[5], "מענה קיים:", jsonData["מענה קיים"]],
+            [numbers[6], "תנאים מגבלות ואילוצים:", jsonData["תנאים מגבלות ואילוצים"]],
       ];
 
       return new Document({
@@ -272,13 +367,15 @@ async function generateDmatsDoc(jsonData, title = "טופס דמ״צ") {
                               page: {
                                     margin: { top: 720, right: 720, bottom: 720, left: 720 },
                               },
-                              rtl: true, // כיוון כללי למסמך
+                              rtl: true,
                         },
                         children: [
+                              createHeader(),
                               createMainTitle(title),
-                              ...mapping.flatMap(([letter, sectionTitle, text]) =>
-                                    createSection(letter, sectionTitle, text)
+                              ...mapping.flatMap(([numbers, titles, text]) =>
+                                    createSection(numbers, titles, text)
                               ),
+                              createSignature(),
                         ],
                   },
             ],
@@ -287,24 +384,17 @@ async function generateDmatsDoc(jsonData, title = "טופס דמ״צ") {
 
 
 
-
-
-function extractJson(text) {
+function extractJson(rawText) {
       try {
-            // מנסה למצוא תוכן בין ```json ... ```
-            const match = text.match(/```json([\s\S]*?)```/);
-            if (match) {
-                  return JSON.parse(match[1].trim());
-            }
-            // אם אין סימונים, ננסה למצוא אובייקט { ... }
-            const curlyMatch = text.match(/\{[\s\S]*\}/);
-            if (curlyMatch) {
-                  return JSON.parse(curlyMatch[0]);
-            }
-            // fallback - אולי זה כבר JSON
-            return JSON.parse(text);
+            // חיפוש תחילת וסוף JSON
+            const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) throw new Error("לא נמצא JSON בתוך הטקסט");
+            // המחרוזת שבתוך {} בלבד
+            const jsonString = jsonMatch[0];
+            // המרת JSON לאובייקט
+            return JSON.parse(jsonString);
       } catch (e) {
-            console.error("❌ לא הצלחתי לפרק JSON:", e, text);
+            console.error("פלט לא תקין מה-AI:", e, jsonString);
             return null;
       }
 }
@@ -376,18 +466,16 @@ async function connectToServer(chatName) {
       }
 }
 
-// ====== getAIResponse ======
+
+// ====== getAIResponse עם stream ======
 async function getAIResponse(userMessage, selectedPrompt = prompt1) {
-      // טוען הודעות קיימות מהשרת
       const messagesFromServer = await connectToServer(chatTitle.textContent);
 
-      // הוספת הודעת המשתמש הנוכחית
       const messagesForAI = [
-            { role: 'system', content: selectedPrompt }, // פרומפט מערכת
+            { role: 'system', content: selectedPrompt },
             ...messagesFromServer,
             { role: 'user', content: userMessage }
       ];
-      console.log("messages For AI:", messagesForAI);
 
       try {
             const response = await fetch("http://localhost:11434/api/chat", {
@@ -396,32 +484,53 @@ async function getAIResponse(userMessage, selectedPrompt = prompt1) {
                   body: JSON.stringify({
                         model: "gemma3:1b",
                         messages: messagesForAI,
-                        stream: false
+                        stream: true
                   })
             });
 
-            if (!response.ok) throw new Error(`שגיאה בשרת: ${response.status}`);
+            if (!response.ok) throw new Error(`שגיאת שרת: ${response.status}`);
 
-            const data = await response.json();
-            const aiMessage = data.message?.content?.trim() || "— לא התקבלה תגובה מה-AI —";
+            // יוצרים בלוק חדש להודעת ה-AI
+            const aiMessageDiv = document.createElement("div");
+            aiMessageDiv.classList.add("message", "ai");
+            document.getElementById("chatMessages").appendChild(aiMessageDiv);
 
-            // שמירה ב-localStorage
-            try {
-                  const answers = JSON.parse(localStorage.getItem("answers") || "{}");
-                  const timestamp = new Date().toISOString();
-                  answers[timestamp] = { question: userMessage, answer: aiMessage };
-                  localStorage.setItem("answers", JSON.stringify(answers, null, 2));
-            } catch (e) {
-                  console.warn("לא הצלחתי לשמור ל-JSON:", e);
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let aiMessage = "";
+
+            while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+
+                  const chunk = decoder.decode(value, { stream: true });
+                  const lines = chunk.split("\n").filter(line => line.trim());
+
+                  for (const line of lines) {
+                        try {
+                              const data = JSON.parse(line);
+                              const delta = data.message?.content || "";
+
+                              aiMessage += delta;
+                              aiMessageDiv.innerHTML = aiMessage.replace(/\n/g, "<br>");
+                              aiMessageDiv.scrollIntoView();
+                        } catch (err) {
+                              console.error("שגיאה בפענוח סטרים:", err, line);
+                        }
+                  }
             }
+
+            // ✅ כאן רק שומרים לשרת — לא מוסיפים עוד הודעה למסך
+            aiHelper.saveMessageToServer("ai", aiMessage);
 
             return aiMessage;
 
       } catch (error) {
-            console.error("שגיאה בקריאת ה-AI:", error);
+            console.error("❌ שגיאה בקריאת ה-AI:", error);
             return "הייתה בעיה בתקשורת עם השרת";
       }
 }
+
 
 
 // ==== HebrewFormAI: טעינת צ'אט ==== 
@@ -497,7 +606,7 @@ class HebrewFormAI {
             if (save) this.saveMessageToServer(sender, text);
 
       }
-
+      /**/
       showTyping() {
             this.typingIndicator.style.display = 'block';
       }
@@ -517,7 +626,7 @@ class HebrewFormAI {
 
             try {
                   const aiResponse = await getAIResponse(text);
-                  this.addMessage(aiResponse, 'ai');
+                  //this.addMessage(aiResponse, 'ai');
             } catch (err) {
                   console.error(err);
                   this.addMessage('❌ שגיאה בתקשורת עם ה-AI', 'ai');

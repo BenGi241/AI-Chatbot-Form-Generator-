@@ -24,8 +24,41 @@
         <div class="chat-title-container">
           <h1 id="chatTitle">צ'אט חדש</h1>
         </div>
-        <button id="exportWordBtn">ייצא צ'אט ל-Word 📄</button>
+        
+      
+        <!-- כפתור ייצוא -->
+<button id="exportWordBtn" class="btn">
+  <span class="btn-text">ייצוא לצ'אט</span>
+</button>
 
+<!-- חלונית קופצת -->
+<div id="exportModal" class="modal hidden">
+  <div class="modal-content">
+    <h2>בחר לוגו והזן שם מגיש</h2>
+
+    <label for="logoInputModal">לוגו:</label>
+    <input type="file" id="logoInputModal" accept="image/*">
+
+    <label for="signatureInput">חתימה:</label>
+    <input type="file" id="signatureInput" accept="image/*">
+
+    <label for="submitterName">שם המגיש:</label>
+    <input type="text" id="submitterName" placeholder="הכנס שם">
+
+    <div class="modal-actions">
+      <button id="cancelExport">ביטול</button>
+      <button id="confirmExport">ייצא</button>
+    </div>
+  </div>
+</div>
+
+          <!-- חלון בחירת לוגו ושם מגיש -->
+
+
+        <!--<span class="loader hidden w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin ml-2"></span>
+        -->
+        
+        
       </div>
 
       <div class="chat-messages" id="chatMessages">
@@ -35,7 +68,7 @@
           </form>
         </div>
       </div>
-
+<!-- -->
       <div class="typing-indicator" id="typingIndicator">
         <span>AI חושב</span>
         <div class="typing-dots"><span></span><span></span><span></span></div>
@@ -62,8 +95,13 @@
         </div>
       </div>
     </div>
-  </div>
-
+  </div>  
   <script type="module" src="./chat.js"></script>
 </body>
 </html>
+
+<!-- 
+bengilad@h-MacBook-Air-sl-Ben Military_Form_AI % npm run dev 
+bengilad@h-MacBook-Air-sl-Ben src % node server.js
+bengilad@h-MacBook-Air-sl-Ben Military form AI % ollama serve
+-->
